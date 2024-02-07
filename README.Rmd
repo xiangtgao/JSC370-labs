@@ -287,7 +287,17 @@ leaflet() |>
 
 ```
 
-- I plotted the geographic median in red and temperature and wind median in blue. Note that I did not remove the duplicates, i.e., stations in one state has the same minimum euclidian distance, so there will be more than one blue dots in some states.
+```{r, eval=FALSE}
+# for knitting to non-html format with html widget
+install.packages("webshot")
+webshot::install_phantomjs()
+install.packages("webshot2")
+```
+
+
+-   I plotted the geographic median in red and temperature and wind median in blue. Note that I did not remove the duplicates, i.e., stations in one state has the same minimum euclidian distance, so there will be more than one blue dots in some states.
+
+-   Note that it's not possible to knit to non-html, i.e., github document with html widget, I installed webshot to make sure a static image of the map is shown in the github markdown
 
 Knit the doc and save it on GitHub.
 
@@ -302,7 +312,24 @@ Use the following breakdown for elevation:
 - High: elev >= 401
 
 ```{r}
+mean_temp_by_state_elev <- met_stations |>
+  mutate(elev = case_when(
+    elev < 93 ~ "Low",
+    elev >= 93 & elev < 401 ~ "Mid",
+    elev >= 401 ~ "High",
+    TRUE ~ NA_character_
+  )) |>
+  filter(!is.na(temp)) |>
+  group_by(STATE, elev) |>
+  summarise(
+    mean_temp = mean(temp, na.rm=TRUE),
+    .groups = "drop" # to get rid of the note about group structure
+  )
 
+
+table <- mean_temp_by_state_elev |>
+  tidyr::spread(key = elev, value = mean_temp)
+kable(table, format = "html", caption = "Average Temperature by State and Elevation")
 ```
 
 
