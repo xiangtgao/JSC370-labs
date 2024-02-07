@@ -169,12 +169,16 @@ colnames(met_stations)
 Across all weather stations, which stations have the median values of temperature, wind speed, and atmospheric pressure? Using the `quantile()` function, identify these three stations. Do they coincide?
 
 ```{r}
+# also add in lat/lon and state for later question use
 station_medians <- met_stations |>
   group_by(USAFID) |>
   summarise(
     median_temp = median(temp, na.rm = TRUE),
     median_windsp = median(wind.sp, na.rm = TRUE),
-    median_pressure = median(atm.press, na.rm = TRUE)
+    median_pressure = median(atm.press, na.rm = TRUE),
+    lat = median(lat, na.rm = TRUE),
+    lon = median(lon, na.rm = TRUE),
+    state = first(STATE),
   )
 
 # remove stations with na
@@ -207,6 +211,7 @@ Reduce(intersect, list(stations_temp, stations_windsp, stations_pressure))
 ```
 
 -   We found that 45 stations have the same median temperature as the national median temperature, 334 stations have the same median wind speed as the national median wind speed, and 23 stations have the same median atmospheric pressure as the national median atmospheric pressure. I have found one station (USAFID = 723119) that satisfies the three median conditions together, so there is one station that conincide the median conditions.
+-   Notice this result is based on that we remove stations with temp below -10, so the numbers might not match exactly if you filter the data differently at the beginning.
 
 Knit the document, commit your changes, and save it on GitHub. Don't forget to add `README.md` to the tree, the first time you render it.
 
@@ -215,8 +220,19 @@ Knit the document, commit your changes, and save it on GitHub. Don't forget to a
 Now let's find the weather stations by state with closest temperature and wind speed based on the euclidean distance from these medians. 
 
 ```{r}
+station_medians$edistance <- sqrt(
+  (station_medians$median_temp - national_medians$median_temp)^2 +
+  (station_medians$median_windsp - national_medians$median_windsp)^2
+)
+
+station_medians |>
+  group_by(state) |>
+  filter(edistance == min(edistance)) |>
+  ungroup()
 
 ```
+
+-   Here, we end up 60 stations that is more than the number of states in US. This is because for some states we have multiple stations that have the same minimum euclidean distance.
 
 Knit the doc and save it on GitHub.
 

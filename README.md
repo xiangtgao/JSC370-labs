@@ -240,12 +240,16 @@ temperature, wind speed, and atmospheric pressure? Using the
 `quantile()` function, identify these three stations. Do they coincide?
 
 ``` r
+# also add in lat/lon and state for later question use
 station_medians <- met_stations |>
   group_by(USAFID) |>
   summarise(
     median_temp = median(temp, na.rm = TRUE),
     median_windsp = median(wind.sp, na.rm = TRUE),
-    median_pressure = median(atm.press, na.rm = TRUE)
+    median_pressure = median(atm.press, na.rm = TRUE),
+    lat = median(lat, na.rm = TRUE),
+    lon = median(lon, na.rm = TRUE),
+    state = first(STATE),
   )
 
 # remove stations with na
@@ -339,6 +343,9 @@ Reduce(intersect, list(stations_temp, stations_windsp, stations_pressure))
   pressure. I have found one station (USAFID = 723119) that satisfies
   the three median conditions together, so there is one station that
   conincide the median conditions.
+- Notice this result is based on that we remove stations with temp below
+  -10, so the numbers might not match exactly if you filter the data
+  differently at the beginning.
 
 Knit the document, commit your changes, and save it on GitHub. Don’t
 forget to add `README.md` to the tree, the first time you render it.
@@ -347,6 +354,37 @@ forget to add `README.md` to the tree, the first time you render it.
 
 Now let’s find the weather stations by state with closest temperature
 and wind speed based on the euclidean distance from these medians.
+
+``` r
+station_medians$edistance <- sqrt(
+  (station_medians$median_temp - national_medians$median_temp)^2 +
+  (station_medians$median_windsp - national_medians$median_windsp)^2
+)
+
+station_medians |>
+  group_by(state) |>
+  filter(edistance == min(edistance)) |>
+  ungroup()
+```
+
+    ## # A tibble: 60 × 8
+    ##    USAFID median_temp median_windsp median_pressure   lat   lon state edistance
+    ##     <int>       <dbl>         <dbl>           <dbl> <dbl> <dbl> <chr>     <dbl>
+    ##  1 720708        23.3           2.6           1004   32.8 -88.8 MS        1.68 
+    ##  2 722151        18.9           3.1           1010.  41.4 -71.8 RI        2.8  
+    ##  3 722180        21.7           3.1           1011.  33.4 -82.0 GA        0    
+    ##  4 722285        22             2.6           1012.  34.0 -86.1 AL        0.583
+    ##  5 722488        25.6           2.1           1012.  32.3 -91.0 LA        4.03 
+    ##  6 723087        22             3.1           1012.  37.1 -76.6 VA        0.300
+    ##  7 723119        21.7           3.1           1012.  34.8 -82.4 SC        0    
+    ##  8 723190        21.7           3.1           1011.  34.5 -82.7 SC        0    
+    ##  9 723194        21.7           3.1           1012.  35.0 -80.6 NC        0    
+    ## 10 723231        22             2.6           1011   34.7 -86.7 AL        0.583
+    ## # ℹ 50 more rows
+
+- Here, we end up 60 stations that is more than the number of states in
+  US. This is because for some states we have multiple stations that
+  have the same minimum euclidean distance.
 
 Knit the doc and save it on GitHub.
 
