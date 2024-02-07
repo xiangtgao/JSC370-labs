@@ -190,7 +190,9 @@ national_medians <- met_stations |>
   summarise(
     median_temp = median(temp, na.rm = TRUE),
     median_windsp = median(wind.sp, na.rm = TRUE),
-    median_pressure = median(atm.press, na.rm = TRUE)
+    median_pressure = median(atm.press, na.rm = TRUE),
+    median_lat = median(lat, na.rm = TRUE),
+    median_lon = median(lon, na.rm = TRUE)
   )
 ```
 
@@ -220,15 +222,18 @@ Knit the document, commit your changes, and save it on GitHub. Don't forget to a
 Now let's find the weather stations by state with closest temperature and wind speed based on the euclidean distance from these medians. 
 
 ```{r}
+# obtain difference in euclidean distance from station median to national median
 station_medians$edistance <- sqrt(
   (station_medians$median_temp - national_medians$median_temp)^2 +
   (station_medians$median_windsp - national_medians$median_windsp)^2
 )
 
-station_medians |>
+close_station_tempwind <- station_medians |>
   group_by(state) |>
   filter(edistance == min(edistance)) |>
   ungroup()
+
+close_station_tempwind
 
 ```
 
@@ -241,8 +246,48 @@ Knit the doc and save it on GitHub.
 For each state, identify which station is closest to the geographic mid-point (median) of the state. Combining these with the stations you identified in the previous question, use `leaflet()` to visualize all ~100 points in the same figure, applying different colors for the geographic median and the temperature and wind speed median.
 
 ```{r}
+# note that the state median lat/lon was calculated previously in Q1
+
+state_medians <- met_stations |>
+  group_by(STATE) |>
+  summarise(
+    median_lat = median(lat, na.rm = TRUE),
+    median_lon = median(lon, na.rm = TRUE),
+    state = first(STATE)
+  )
+
+station_medians_with_state_mean <- merge(
+ x = station_medians,
+ y = state_medians,
+ by.x = "state",
+ by.y = "state",
+ all.x = TRUE,
+ all.y = FALSE
+ ) 
+
+# obtain distance from state geographic median
+station_medians_with_state_mean$edistance_to_median <- sqrt(
+  (station_medians_with_state_mean$lat - station_medians_with_state_mean$median_lat)^2 +
+  (station_medians_with_state_mean$lon - station_medians_with_state_mean$median_lon)^2
+)
+
+# identify the closest station in each state
+close_station_geo <- station_medians_with_state_mean |>
+  group_by(state) |>
+  filter(edistance_to_median == min(edistance_to_median)) |>
+  ungroup()
+
+close_station_geo
+
+leaflet() |>
+  addProviderTiles('CartoDB.Positron') |>
+  addCircles(data = close_station_geo, lat = ~lat, lng = ~lon, color = "red") |>
+  addCircles(data = close_station_tempwind, lat = ~lat, lng = ~lon, color = "blue")
+
 
 ```
+
+- I plotted the geographic median in red and temperature and wind median in blue. Note that I did not remove the duplicates, i.e., stations in one state has the same minimum euclidian distance, so there will be more than one blue dots in some states.
 
 Knit the doc and save it on GitHub.
 
