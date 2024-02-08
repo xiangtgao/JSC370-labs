@@ -342,11 +342,34 @@ Let's practice running regression models with smooth functions on X. We need the
 
 - using your data with the median values per station, first create a lazy table. Filter out values of atmospheric pressure outside of the range 1000 to 1020. Examine the association between temperature (y) and atmospheric pressure (x). Create a scatterplot of the two variables using ggplot2. Add both a linear regression line and a smooth line.
 
-- fit both a linear model and a spline model (use `gam()` with a cubic regression spline on wind speed). Summarize and plot the results from the models and interpret which model is the best fit and why.
+- fit both a linear model and a spline model (use `gam()` with a cubic regression spline on "wind speed" correction: "atmospheric pressure"). Summarize and plot the results from the models and interpret which model is the best fit and why.
 
 ```{r}
+lazy_station_median <- lazy_dt(station_medians)
+station_median_filtered <- lazy_station_median |>
+  filter(median_pressure >= 1000 & median_pressure <= 1020) |>
+  collect()
 
+ggplot(station_median_filtered, aes(x = median_pressure, y = median_temp)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", formula = 'y ~ x') + 
+  geom_smooth(method = "gam", formula = y ~ s(x), color = "red") +
+  labs(title = "Temperature vs. Atmospheric Pressure", x = "Atmospheric Pressure", y = "Temperature")
 ```
+
+```{r}
+# Prof. Franklin mentioned that the x should be pressure instead of wind speed
+linear_model <- lm(median_temp ~ median_pressure, data = station_median_filtered)
+summary(linear_model)
+
+spline_model <- gam(median_temp ~ s(median_pressure, bs = "cr"), data = station_median_filtered)
+summary(spline_model)
+
+plot(linear_model)
+plot(spline_model)
+```
+
+-   Here, we have shown the plotted lines for both linear and spline models for temperature ~ atmospheric pressure, and we have demonstated the summaries of each model. Even though the R squared for spline model is slightly higher, I would argue that the linear model is a better fit here. Based on the scatterplot with both fit lines, we see that the polynomial model overfits to the data pattern especially at the regions where we have less samples. This pattern may be generalizable if we try to collect more data. Therefore, from the perspective of having a robust model, the linear model would be a better choice here. 
 
 ## Deliverables
 

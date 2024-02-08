@@ -1224,8 +1224,99 @@ need the `mgcv` package and `gam()` function to do this.
   smooth line.
 
 - fit both a linear model and a spline model (use `gam()` with a cubic
-  regression spline on wind speed). Summarize and plot the results from
-  the models and interpret which model is the best fit and why.
+  regression spline on “wind speed” correction: “atmospheric pressure”).
+  Summarize and plot the results from the models and interpret which
+  model is the best fit and why.
+
+``` r
+lazy_station_median <- lazy_dt(station_medians)
+station_median_filtered <- lazy_station_median |>
+  filter(median_pressure >= 1000 & median_pressure <= 1020) |>
+  collect()
+
+ggplot(station_median_filtered, aes(x = median_pressure, y = median_temp)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", formula = 'y ~ x') + 
+  geom_smooth(method = "gam", formula = y ~ s(x), color = "red") +
+  labs(title = "Temperature vs. Atmospheric Pressure", x = "Atmospheric Pressure", y = "Temperature")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+# Prof. Franklin mentioned that the x should be pressure instead of wind speed
+linear_model <- lm(median_temp ~ median_pressure, data = station_median_filtered)
+summary(linear_model)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = median_temp ~ median_pressure, data = station_median_filtered)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -14.3841  -2.6127   0.1848   2.2930  11.6505 
+    ## 
+    ## Coefficients:
+    ##                   Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)     1181.97114   58.56753   20.18   <2e-16 ***
+    ## median_pressure   -1.14758    0.05789  -19.82   <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 3.759 on 1081 degrees of freedom
+    ## Multiple R-squared:  0.2666, Adjusted R-squared:  0.2659 
+    ## F-statistic:   393 on 1 and 1081 DF,  p-value: < 2.2e-16
+
+``` r
+spline_model <- gam(median_temp ~ s(median_pressure, bs = "cr"), data = station_median_filtered)
+summary(spline_model)
+```
+
+    ## 
+    ## Family: gaussian 
+    ## Link function: identity 
+    ## 
+    ## Formula:
+    ## median_temp ~ s(median_pressure, bs = "cr")
+    ## 
+    ## Parametric coefficients:
+    ##             Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  20.9391     0.1116   187.6   <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Approximate significance of smooth terms:
+    ##                      edf Ref.df     F p-value    
+    ## s(median_pressure) 8.682   8.97 52.05  <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## R-sq.(adj) =  0.299   Deviance explained = 30.5%
+    ## GCV =  13.61  Scale est. = 13.489    n = 1083
+
+``` r
+plot(linear_model)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-12-4.png)<!-- -->
+
+``` r
+plot(spline_model)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-12-5.png)<!-- -->
+
+- Here, we have shown the plotted lines for both linear and spline
+  models for temperature ~ atmospheric pressure, and we have demonstated
+  the summaries of each model. Even though the R squared for spline
+  model is slightly higher, I would argue that the linear model is a
+  better fit here. Based on the scatterplot with both fit lines, we see
+  that the polynomial model overfits to the data pattern especially at
+  the regions where we have less samples. This pattern may be
+  generalizable if we try to collect more data. Therefore, from the
+  perspective of having a robust model, the linear model would be a
+  better choice here.
 
 ## Deliverables
 
