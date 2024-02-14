@@ -143,10 +143,10 @@ Using the function `stringr::str_extract_all()` applied on `publications_txt`, c
 
 Write a regular expression that captures all such instances
 
-```{r univ-institute-regex, eval = FALSE}
-institution <- str_extract_all(
+```{r univ-institute-regex}
+institution <- stringr::str_extract_all(
   publications_txt,
-  "[YOUR REGULAR EXPRESSION HERE]"
+  "(University of [:alpha:]+(?: [:alpha:]+){0,2} | [:alpha:]+(?: [:alpha:]+){0,2} Institute of [:alpha:]+(?: [:alpha:]+){0,2})"
   ) 
 institution <- unlist(institution)
 as.data.frame(table(institution))
@@ -160,9 +160,9 @@ Repeat the exercise and this time focus on schools and departments in the form o
 And tabulate the results
 
 ```{r school-department, eval = FALSE}
-schools_and_deps <- str_extract_all(
-  abstracts_txt,
-  "[YOUR REGULAR EXPRESSION HERE]"
+schools_and_deps <- stringr::str_extract_all(
+  publications_txt,
+  "(School of [:alpha:]+(?: [:alpha:]+){0,2} | Department of [:alpha:]+(?: [:alpha:]+){0,2})"
   )
 as.data.frame(table(schools_and_deps))
 ```
