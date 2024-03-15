@@ -1,5 +1,8 @@
 # JSC370 Labs - Xiang Gao
 
+## Lab 10
+[Rendered HTML - Lab 10](https://htmlpreview.github.io/?https://github.com/xiangtgao/JSC370-labs/blob/main/lab10/lab10-ml.html)
+
 ## Lab 09
 [Rendered HTML - Lab 09](https://htmlpreview.github.io/?https://github.com/xiangtgao/JSC370-labs/blob/main/lab09/lab09-hpc.html)
 
